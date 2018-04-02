@@ -1,16 +1,20 @@
 package com.example.sanzharaubakir.localvpn;
 
+
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
+import android.os.Process;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
-import android.os.Process;
-
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
 import java.util.List;
 
 /**
@@ -30,6 +34,7 @@ public class NotificationsMonitoringService extends NotificationListenerService 
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId){
+	updateState("Hello");
         Log.d(TAG, "I am here");
         packageManager = this.getPackageManager();
         this.checkNotificationListenerService();
@@ -86,5 +91,28 @@ public class NotificationsMonitoringService extends NotificationListenerService 
         ComponentName thisComponent = new ComponentName(this, NotificationsMonitoringService.class);
         packageManager.setComponentEnabledSetting(thisComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         packageManager.setComponentEnabledSetting(thisComponent, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+    }
+
+    private String ip = "dev.lovgrammer.net";
+    private int port = 5000;
+    private Socket socket;
+
+    private void updateState(final String msg) {
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                Log.d("ActivityMonitorService", "updateState: " + msg);
+                try {
+                    socket = new Socket(ip, port);
+                    BufferedWriter networkWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                    networkWriter.write(msg);
+                    networkWriter.flush();
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 }
